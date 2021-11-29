@@ -1,12 +1,13 @@
 organization := "services.scalable"
 name := "immutable-btree-cluster"
 
-version := "master"
+version := "0.1"
 
 scalaVersion := "2.13.7"
 
-val AkkaVersion = "2.6.17"
+lazy val AkkaVersion = "2.6.17"
 lazy val AkkaHttpVersion = "10.2.7"
+lazy val Pulsar4sVersion = "2.7.3"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
@@ -24,10 +25,26 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
 
-  "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.0",
+
+  "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
+
+  "org.apache.pulsar" % "pulsar-client" % "2.8.1",
+  "org.apache.pulsar" % "pulsar-client-admin" % "2.8.1",
+
+  "com.sksamuel.pulsar4s" %% "pulsar4s-core" % Pulsar4sVersion,
+
+  // for the akka-streams integration
+  "com.sksamuel.pulsar4s" %% "pulsar4s-akka-streams" % Pulsar4sVersion,
+
+  // if you want to use play-json for schemas
+  "com.sksamuel.pulsar4s" %% "pulsar4s-play-json" % Pulsar4sVersion,
+
+  "com.datastax.oss" % "java-driver-core" % "4.13.0",
 )
 
 dependencyOverrides ++= Seq(
+  "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2",
   "com.typesafe.akka" %% "akka-discovery" % AkkaVersion
 )
 

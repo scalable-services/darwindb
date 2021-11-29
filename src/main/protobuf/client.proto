@@ -7,13 +7,12 @@ import "protocol.proto";
 //#options
 option java_multiple_files = true;
 option java_package = "cluster.protocol";
-option java_outer_classname = "EntityService";
+option java_outer_classname = "CoordinatorService";
 
 //#options
 
 //#services
-service EntityService {
-    rpc Submit (HelloRequest) returns (HelloReply) {}
+service CoordinatorService {
+    rpc Submit (TaskRequest) returns (TaskResponse) {}
 }
-
 //#services
