@@ -1,6 +1,7 @@
+organization := "services.scalable"
 name := "immutable-btree-cluster"
 
-version := "0.1"
+version := "master"
 
 scalaVersion := "2.13.7"
 
