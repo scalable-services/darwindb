@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package cluster.protocol;
+
+//import "scalapb/scalapb.proto";
+import "google/protobuf/timestamp.proto";
+
+//#options
+option java_multiple_files = true;
+option java_package = "cluster.protocol";
+option java_outer_classname = "EntityService";
+
+/*option (scalapb.options) = {
+  single_file: true
+  flat_package: true
+  preamble: "sealed trait ActorCommand"
+};
+
+message Stop {
+  option (scalapb.message).extends = "ActorCommand";
+}*/
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+  google.protobuf.Timestamp timestamp = 2;
+}
