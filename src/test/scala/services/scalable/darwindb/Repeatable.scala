@@ -1,4 +1,4 @@
-package cluster
+package services.scalable.darwindb
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{Outcome, Succeeded}

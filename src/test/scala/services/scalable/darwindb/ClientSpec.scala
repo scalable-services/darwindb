@@ -1,9 +1,9 @@
-package cluster
+package services.scalable.darwindb
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.grpc.GrpcClientSettings
-import cluster.protocol.{CoordinatorServiceClient, TaskRequest}
+import services.scalable.darwindb.protocol.{CoordinatorServiceClient, TaskRequest}
 import com.datastax.oss.driver.api.core.CqlSession
 import com.typesafe.config.ConfigFactory
 import org.scalatest.flatspec.AnyFlatSpec

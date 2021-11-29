@@ -1,23 +1,21 @@
-package cluster
+package services.scalable.darwindb
 
 import akka.actor.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{Behavior, PostStop, SupervisorStrategy}
 import akka.stream.KillSwitches
 import akka.stream.scaladsl.{Sink, Source}
-import cluster.protocol.{Batch, BatchDone, Position, VoteBatch}
 import com.datastax.oss.driver.api.core.CqlSession
-import com.google.protobuf.ByteString
 import com.google.protobuf.any.Any
-import org.apache.pulsar.client.api.Schema
-import com.sksamuel.pulsar4s.{ConsumerConfig, ConsumerMessage, Message, MessageId, Producer, ProducerConfig, ProducerMessage, PulsarClient, PulsarClientConfig, Reader, ReaderConfig, Subscription, Topic}
-import org.apache.pulsar.client.api.{Schema, SubscriptionInitialPosition, SubscriptionType}
 import com.sksamuel.pulsar4s.akka.streams.{sink, source}
+import com.sksamuel.pulsar4s._
 import org.apache.pulsar.client.admin.PulsarAdmin
+import org.apache.pulsar.client.api.{Schema, SubscriptionInitialPosition, SubscriptionType}
+import services.scalable.darwindb.protocol.{Batch, BatchDone, Position, VoteBatch}
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 import scala.jdk.FutureConverters._
 import scala.util.{Failure, Success}
 

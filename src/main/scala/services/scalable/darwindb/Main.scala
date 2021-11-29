@@ -1,4 +1,4 @@
-package cluster
+package services.scalable.darwindb
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}

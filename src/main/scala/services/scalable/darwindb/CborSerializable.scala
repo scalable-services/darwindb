@@ -1,4 +1,4 @@
-package cluster
+package services.scalable.darwindb
 
 /**
   * Marker trait for serialization with Jackson CBOR

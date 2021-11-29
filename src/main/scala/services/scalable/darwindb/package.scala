@@ -1,10 +1,12 @@
+package services.scalable
+
 import com.datastax.oss.driver.api.core.config.{DefaultDriverOption, DriverConfigLoader}
 import com.google.common.hash.Hashing
 
 import java.util.concurrent.TimeUnit
 import scala.util.hashing.MurmurHash3
 
-package object cluster {
+package object darwindb {
 
   object Config {
 

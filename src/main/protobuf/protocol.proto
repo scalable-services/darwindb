@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package cluster.protocol;
+package services.scalable.darwindb.protocol;
 
 import "scalapb/scalapb.proto";
 import "google/protobuf/timestamp.proto";
 
 //#options
 option java_multiple_files = true;
-option java_package = "cluster.protocol";
+option java_package = "services.scalable.darwindb.protocol";
 //option java_outer_classname = "CoordinatorService";
 
 option (scalapb.options) = {

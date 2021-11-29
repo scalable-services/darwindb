@@ -1,21 +1,19 @@
-package cluster
+package services.scalable.darwindb
 
-import akka.Done
 import akka.actor.ActorSystem
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior, PostStop, SupervisorStrategy}
-import akka.pattern.pipe
-import akka.stream.{DelayOverflowStrategy, KillSwitches}
+import akka.stream.KillSwitches
 import akka.stream.scaladsl.{Sink, Source}
-import cluster.protocol.{Batch, BatchDone, TaskRequest, TaskResponse}
 import com.datastax.oss.driver.api.core.cql.{BatchStatement, BatchType}
 import com.datastax.oss.driver.api.core.{CqlSession, DefaultConsistencyLevel}
 import com.google.protobuf.any.Any
 import com.sksamuel.pulsar4s.akka.streams.{sink, source}
-import com.sksamuel.pulsar4s.{ConsumerConfig, ConsumerMessage, MessageId, Producer, ProducerConfig, ProducerMessage, PulsarClient, PulsarClientConfig, Subscription, Topic}
+import com.sksamuel.pulsar4s._
 import io.netty.util.internal.ThreadLocalRandom
 import org.apache.pulsar.client.api.{Schema, SubscriptionInitialPosition, SubscriptionType}
+import services.scalable.darwindb.protocol.{Batch, BatchDone, TaskRequest, TaskResponse}
 
 import java.nio.ByteBuffer
 import java.util.UUID

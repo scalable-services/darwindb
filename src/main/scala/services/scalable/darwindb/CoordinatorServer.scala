@@ -1,4 +1,4 @@
-package cluster
+package services.scalable.darwindb
 
 import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
@@ -6,7 +6,7 @@ import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import scala.concurrent.Future
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import cluster.protocol.CoordinatorServiceHandler
+import services.scalable.darwindb.protocol.CoordinatorServiceHandler
 import scala.concurrent.duration._
 
 import scala.util.{Failure, Success}

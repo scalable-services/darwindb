@@ -1,11 +1,11 @@
-package cluster
+package services.scalable.darwindb
 
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.util.Timeout
-import cluster.protocol.{CoordinatorService, TaskRequest, TaskResponse}
+import services.scalable.darwindb.protocol.{CoordinatorService, TaskRequest, TaskResponse}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

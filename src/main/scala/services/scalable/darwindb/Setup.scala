@@ -1,4 +1,4 @@
-package cluster
+package services.scalable.darwindb
 
 import com.sksamuel.exts.Logging
 import org.apache.pulsar.client.admin.PulsarAdmin
