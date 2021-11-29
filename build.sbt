@@ -42,7 +42,7 @@ libraryDependencies ++= Seq(
 
   "com.datastax.oss" % "java-driver-core" % "4.13.0",
 
-  "services.scalable" %% "datalog" % "0.1"
+  "services.scalable" %% "datalog" % "0.2"
 )
 
 dependencyOverrides ++= Seq(
