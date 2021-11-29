@@ -2,8 +2,10 @@ package services.scalable
 
 import com.datastax.oss.driver.api.core.config.{DefaultDriverOption, DriverConfigLoader}
 import com.google.common.hash.Hashing
+import services.scalable.index.{AsyncIterator, Tuple}
 
 import java.util.concurrent.TimeUnit
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.hashing.MurmurHash3
 
 package object darwindb {
@@ -25,6 +27,7 @@ package object darwindb {
         .build()
 
     val KEYSPACE = "scheduler"
+    val DB_KEYSPACE = "indexes"
 
     val NUM_WORKERS = 3
     val NUM_COORDINATORS = 3
@@ -73,5 +76,25 @@ package object darwindb {
 
   def computeCoordinator(id: String): Int = {
     (Hashing.murmur3_128().hashBytes(id.getBytes()).asInt() % Config.NUM_COORDINATORS).abs
+  }
+
+  object Helper {
+    def all[K, V](it: AsyncIterator[Seq[Tuple[K, V]]])(implicit ec: ExecutionContext): Future[Seq[Tuple[K, V]]] = {
+      it.hasNext().flatMap {
+        case true => it.next().flatMap { list =>
+          all(it).map{list ++ _}
+        }
+        case false => Future.successful(Seq.empty[Tuple[K, V]])
+      }
+    }
+
+    def one[K, V](it: AsyncIterator[Seq[Tuple[K, V]]])(implicit ec: ExecutionContext): Future[Option[Tuple[K, V]]] = {
+      it.hasNext().flatMap {
+        case true => it.next().map { list =>
+          list.headOption
+        }
+        case false => Future.successful(None)
+      }
+    }
   }
 }

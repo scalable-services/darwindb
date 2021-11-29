@@ -17,6 +17,9 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationLong
 import scala.language.postfixOps
 
+/**
+ * TODO Implement the logic for saving the state of the aggregator before failure.
+ */
 object Aggregator {
 
   trait Command extends CborSerializable
@@ -98,15 +101,19 @@ object Aggregator {
         task()
         Behaviors.same
 
-      case Stop => Behaviors.stopped
+      case Stop =>
+        close()
+        Behaviors.stopped
+
       case _ => Behaviors.same
-    }.receiveSignal {
+    }/*.receiveSignal {
+
       case (context, PostStop) =>
         close()
         Behaviors.same
 
       case _ => Behaviors.same
-    }
+    }*/
   }
 
 }

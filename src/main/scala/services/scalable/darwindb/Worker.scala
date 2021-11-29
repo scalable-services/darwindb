@@ -6,19 +6,29 @@ import akka.actor.typed.{Behavior, PostStop, SupervisorStrategy}
 import akka.stream.KillSwitches
 import akka.stream.scaladsl.{Sink, Source}
 import com.datastax.oss.driver.api.core.CqlSession
+import com.google.protobuf.ByteString
 import com.google.protobuf.any.Any
 import com.sksamuel.pulsar4s.akka.streams.{sink, source}
 import com.sksamuel.pulsar4s._
 import org.apache.pulsar.client.admin.PulsarAdmin
 import org.apache.pulsar.client.api.{Schema, SubscriptionInitialPosition, SubscriptionType}
-import services.scalable.darwindb.protocol.{Batch, BatchDone, Position, VoteBatch}
+import services.scalable.darwindb.protocol.{Batch, BatchDone, Position, TaskRequest, VoteBatch}
+import services.scalable.datalog.{CQLStorage, DatomDatabase}
+import services.scalable.datalog.grpc.Datom
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.jdk.FutureConverters._
 import scala.util.{Failure, Success}
+import services.scalable.datalog.DefaultDatalogSerializers.grpcBlockSerializer
+import services.scalable.index.{AsyncIterator, Bytes, Tuple}
+import services.scalable.index.DefaultComparators.ord
+import services.scalable.index.impl.DefaultCache
 
+/**
+ * TODO Implement the logic for saving the state of the worker before failure.
+ */
 object Worker {
 
   trait Command extends CborSerializable
@@ -37,6 +47,12 @@ object Worker {
         .withConfigLoader(Config.loader)
         //.withLocalDatacenter(Config.DC)
         .withKeyspace(Config.KEYSPACE)
+        .build()
+
+      val dbSession = CqlSession
+        .builder()
+        .withConfigLoader(Config.loader)
+        .withKeyspace(Config.DB_KEYSPACE)
         .build()
 
       implicit val classicSystem: ActorSystem = ctx.system.classicSystem
@@ -199,9 +215,10 @@ object Worker {
       }
 
       topologySource
-        .via(sharedTopologyKillSwitch.flow)
+        //.via(sharedTopologyKillSwitch.flow)
         .mapAsync(1)(handler)
-        .runWith(lastTopologySnk)
+        .run()
+        //.runWith(lastTopologySnk)
 
       val statusTopic = Topic(s"persistent://public/darwindb/worker-${id}")
 
@@ -219,8 +236,8 @@ object Worker {
 
       val EMPTY_ARRAY = Array.empty[Byte]
 
-      /*implicit val cache = new DefaultCache[Datom, Bytes](MAX_PARENT_ENTRIES = 80000)
-      implicit val storage = new CQLStorage(NUM_LEAF_ENTRIES, NUM_META_ENTRIES)
+      implicit val cache = new DefaultCache[Datom, Bytes](MAX_PARENT_ENTRIES = 80000)
+      implicit val storage = new CQLStorage(NUM_LEAF_ENTRIES, NUM_META_ENTRIES, dbSession)
 
       val termOrd = new Ordering[Datom] {
         override def compare(x: Datom, y: Datom): Int = {
@@ -281,13 +298,7 @@ object Worker {
         }
       }
 
-      val dbSession = CqlSession
-        .builder()
-        .withConfigLoader(loader)
-        .withKeyspace("indexes")
-        .build()*/
-
-      /*def executeBatch(b: Batch): Future[Seq[(String, Boolean)]] = {
+      def executeBatch(b: Batch): Future[Seq[(String, Boolean)]] = {
 
         def loadDB(k: String): Future[DatomDatabase] = {
           val db = new DatomDatabase(k, NUM_LEAF_ENTRIES, NUM_META_ENTRIES)(ec, dbSession, grpcBlockSerializer, cache, storage)
@@ -313,7 +324,7 @@ object Worker {
         }
 
         Future.sequence(b.tasks.map{t => execute(t).map{t.id -> _}})
-      }*/
+      }
 
       def shandler(msg: ConsumerMessage[Array[Byte]]): Future[Boolean] = {
         val parsed = Any.parseFrom(msg.value)
@@ -331,7 +342,7 @@ object Worker {
 
           logger.info(s"${Console.YELLOW_B}$name votes ${votes} batch ${if(b != null) b.id else ""}${Console.RESET}")
 
-          if(b != null && votes.isDefinedAt(b.id) && b.workers.forall(votes(b.id).contains(_))){
+          /*if(b != null && votes.isDefinedAt(b.id) && b.workers.forall(votes(b.id).contains(_))){
             votes.remove(b.id)
 
             logger.info(s"${Console.GREEN_B}$name executing ${b.id} with workers ${b.workers.sorted}${Console.RESET}")
@@ -342,9 +353,9 @@ object Worker {
             notifyWorker(done)
           }
 
-          return Future.successful(true)
+          return Future.successful(true)*/
 
-          /*if(b != null && votes.isDefinedAt(b.id) && b.workers.forall(votes(b.id).contains(_))){
+          if(b != null && votes.isDefinedAt(b.id) && b.workers.forall(votes(b.id).contains(_))){
             votes.remove(b.id)
 
             logger.info(s"${Console.GREEN_B}$name executing ${b.id} with workers ${b.workers.sorted}${Console.RESET}")
@@ -363,7 +374,7 @@ object Worker {
             }
           }
 
-          return Future.successful(true)*/
+          return Future.successful(true)
         }
 
         val done = parsed.unpack(BatchDone)
@@ -379,9 +390,10 @@ object Worker {
       }
 
       statusSource
-        .via(sharedStatusKillSwitch.flow)
+        //.via(sharedStatusKillSwitch.flow)
         .mapAsync(1)(shandler)
-        .runWith(lastStatusSnk)
+        .run()
+        //.runWith(lastStatusSnk)
 
       def close(): Future[Boolean] = {
 
@@ -390,6 +402,7 @@ object Worker {
         client.close()
 
         for {
+          _ <- dbSession.closeAsync().asScala
           _ <- session.closeAsync().asScala
           // _ <- consumer.closeAsync().toScala
           // _ <- client.closeAsync().toScala
@@ -401,15 +414,20 @@ object Worker {
       logger.info(s"\n${Console.GREEN_B}STARTING WORKER ${name}...${Console.RESET}\n")
 
       Behaviors.receiveMessage[Command] {
-        case Stop => Behaviors.stopped
+        case Stop =>
+
+          close()
+          Behaviors.stopped
+
         case _ => Behaviors.same
-      }.receiveSignal {
+      }/*.receiveSignal {
         case (context, PostStop) =>
 
           close()
           Behaviors.same
+
         case _ => Behaviors.same
-      }
+      }*/
     }
   }.onFailure[Exception](SupervisorStrategy.restart)
 

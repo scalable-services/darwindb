@@ -24,6 +24,9 @@ import scala.jdk.CollectionConverters._
 import scala.jdk.FutureConverters._
 import scala.language.postfixOps
 
+/**
+ * TODO Implement the logic for saving the state of the coordinator before failure.
+ */
 object Coordinator {
 
   trait Command extends CborSerializable
@@ -186,9 +189,10 @@ object Coordinator {
 
       coordSource
         //.delay(1.second, DelayOverflowStrategy.backpressure)
-        .via(sharedKillSwitch.flow)
+        //.via(sharedKillSwitch.flow)
         .mapAsync(1)(handler)
-        .runWith(lastSnk)
+        .run()
+        //.runWith(lastSnk)
 
       def close(): Future[Boolean] = {
 
@@ -222,16 +226,19 @@ object Coordinator {
           task()
           Behaviors.same
 
-        case Stop => Behaviors.stopped
+        case Stop =>
+          close()
+          Behaviors.stopped
+
         case _ => Behaviors.same
 
-      }.receiveSignal {
+      }/*.receiveSignal {
         case (context, PostStop) =>
           close()
           Behaviors.same
 
         case _ => Behaviors.same
-      }
+      }*/
     }
   }.onFailure[Exception](SupervisorStrategy.restart)
 

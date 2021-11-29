@@ -19,7 +19,7 @@ object Main {
       val singleton = ClusterSingleton(ctx.system)
 
       val proxy: ActorRef[Aggregator.Command] = singleton.init(
-        SingletonActor(Behaviors.supervise(Aggregator()).onFailure[Throwable](SupervisorStrategy.restart),
+        SingletonActor(Behaviors.supervise(Aggregator()).onFailure[Exception](SupervisorStrategy.restart),
           "Aggregator"))
 
       daemon.init("workers", WORKERS.length, id => Worker(WORKERS(id), id), Worker.Stop)

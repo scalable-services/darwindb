@@ -41,6 +41,8 @@ libraryDependencies ++= Seq(
   "com.sksamuel.pulsar4s" %% "pulsar4s-play-json" % Pulsar4sVersion,
 
   "com.datastax.oss" % "java-driver-core" % "4.13.0",
+
+  "services.scalable" %% "datalog" % "0.1"
 )
 
 dependencyOverrides ++= Seq(
