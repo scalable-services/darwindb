@@ -55,6 +55,7 @@ class ClientSpec extends AnyFlatSpec with Repeatable {
 
       val settings = GrpcClientSettings.connectToServiceAt("127.0.0.1", ports(rand.nextInt(0, ports.length)))
         .withTls(false)
+        .withDeadline(java.time.Duration.ofSeconds(Config.REQUEST_TIMEOUT))
       val client = CoordinatorServiceClient(settings)
 
       clients = clients + (i -> client)

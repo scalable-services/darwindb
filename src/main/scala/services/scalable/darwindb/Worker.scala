@@ -98,7 +98,7 @@ object Worker {
       val consumerFn = () => client.consumer(ConsumerConfig(subscriptionName = Subscription(s"$name-topo"),
         topics = Seq(topologyTopic),
         subscriptionType = Some(SubscriptionType.Exclusive),
-        subscriptionInitialPosition = Some(SubscriptionInitialPosition.Latest)),
+        subscriptionInitialPosition = Some(SubscriptionInitialPosition.Earliest)),
       )
 
       val lastTopologySnk = Sink.last[Boolean]
@@ -223,7 +223,7 @@ object Worker {
       val statusTopic = Topic(s"persistent://public/darwindb/worker-${id}")
 
       val sconsumerFn = () => client.consumer(ConsumerConfig(subscriptionName = Subscription(s"$name-status"), topics = Seq(statusTopic),
-        subscriptionType = Some(SubscriptionType.Exclusive)))
+        subscriptionType = Some(SubscriptionType.Exclusive), subscriptionInitialPosition = Some(SubscriptionInitialPosition.Earliest)))
 
       val lastStatusSnk = Sink.last[Boolean]
       val sharedStatusKillSwitch = KillSwitches.shared("worker-status-kill-switch")

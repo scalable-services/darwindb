@@ -8,12 +8,13 @@ import akka.stream.KillSwitches
 import akka.stream.scaladsl.{Sink, Source}
 import com.datastax.oss.driver.api.core.cql.{BatchStatement, BatchType}
 import com.datastax.oss.driver.api.core.{CqlSession, DefaultConsistencyLevel}
+import com.google.protobuf.ByteString
 import com.google.protobuf.any.Any
 import com.sksamuel.pulsar4s.akka.streams.{sink, source}
 import com.sksamuel.pulsar4s._
 import io.netty.util.internal.ThreadLocalRandom
 import org.apache.pulsar.client.api.{Schema, SubscriptionInitialPosition, SubscriptionType}
-import services.scalable.darwindb.protocol.{Batch, BatchDone, TaskRequest, TaskResponse}
+import services.scalable.darwindb.protocol.{Batch, BatchDone, Offsets, TaskRequest, TaskResponse}
 
 import java.nio.ByteBuffer
 import java.util.UUID
@@ -23,6 +24,7 @@ import scala.concurrent.{Future, Promise}
 import scala.jdk.CollectionConverters._
 import scala.jdk.FutureConverters._
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 /**
  * TODO Implement the logic for saving the state of the coordinator before failure.
@@ -56,6 +58,28 @@ object Coordinator {
       val INSERT_META_BATCH = session.prepare("insert into batches(id, workers, completed, votes) values(?, ?, false, {});")
 
       val UPDATE_TOPIC_META = session.prepare(s"update topic_offsets set last = ?, offset = ? where topic = ? and partition = ?;")
+
+      val UPDATE_STATE = session.prepare("update coordinators set offset = :offset where id = :id;")
+      val GET_STATE = session.prepare("select * from coordinators where id = :id;")
+
+      def getState(): Future[Option[MessageId]] = {
+        session.executeAsync(GET_STATE.bind().setString("id", name)).asScala.map { rs =>
+          val one = rs.one()
+
+          if(one == null){
+            None
+          } else {
+            Some(org.apache.pulsar.client.api.MessageId.fromByteArray(one.getByteBuffer("offset").array()))
+          }
+        }
+      }
+
+      def updateState(m: MessageId): Future[Boolean] = {
+        session.executeAsync(UPDATE_STATE.bind()
+          .setByteBuffer("offsets", ByteBuffer.wrap(m.toByteArray))
+          .setString("id", name)
+        ).asScala.map(_.wasApplied())
+      }
 
       val queue = TrieMap.empty[String, (TaskRequest, Promise[TaskResponse])]
       val processing = TrieMap.empty[String, (TaskRequest, Promise[TaskResponse])]
@@ -177,10 +201,18 @@ object Coordinator {
 
       val coordTopic = Topic(s"persistent://public/darwindb/coord-${id}")
 
+      /*getState().onComplete {
+        case Success(opt) =>
+
+
+
+        case Failure(ex) => logger.error(ex.getMessage)
+      }*/
+
       val consumerFn = () => client.consumer(ConsumerConfig(subscriptionName = Subscription(s"$name-sub"),
         topics = Seq(coordTopic),
         subscriptionType = Some(SubscriptionType.Exclusive),
-        subscriptionInitialPosition = Some(SubscriptionInitialPosition.Latest)),
+        subscriptionInitialPosition = Some(SubscriptionInitialPosition.Earliest)),
       )
 
       val coordSource = source(consumerFn, Some(MessageId.latest))
@@ -192,12 +224,12 @@ object Coordinator {
         //.via(sharedKillSwitch.flow)
         .mapAsync(1)(handler)
         .run()
-        //.runWith(lastSnk)
+      //.runWith(lastSnk)
 
       def close(): Future[Boolean] = {
 
-        sharedKillSwitch.shutdown()
-        batchTask.cancel()
+        //sharedKillSwitch.shutdown()
+        if(batchTask != null) batchTask.cancel()
         client.close()
 
         for {

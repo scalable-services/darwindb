@@ -12,6 +12,8 @@ package object darwindb {
 
   object Config {
 
+    val REQUEST_TIMEOUT = 30L
+
     val loader =
       DriverConfigLoader.programmaticBuilder()
         .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, java.time.Duration.ofSeconds(30))

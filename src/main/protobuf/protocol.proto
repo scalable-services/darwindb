@@ -114,3 +114,8 @@ message Position {
   bytes end = 3;
   int32 p = 4;
 }
+
+message Offsets {
+  string id = 1;
+  map<int32, bytes> offsets = 2;
+}

@@ -15,7 +15,7 @@ class CoordinatorServiceImpl(val port: Int, system: ActorSystem[_], sharding: Cl
 
   val logger = system.log
 
-  implicit val timeout = Timeout(5 seconds)
+  implicit val timeout = Timeout(Config.REQUEST_TIMEOUT seconds)
   implicit val ec = system.executionContext
   implicit val scheduler = system.scheduler
 
