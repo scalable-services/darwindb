@@ -27,7 +27,7 @@ import scala.language.postfixOps
 
 class ClientDBSpec extends AnyFlatSpec with Repeatable {
 
-  override val times = 1
+  override val times = 100
 
   val logger = LoggerFactory.getLogger(this.getClass)
   val rand = ThreadLocalRandom.current()

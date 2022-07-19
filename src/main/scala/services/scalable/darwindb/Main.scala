@@ -44,7 +44,7 @@ object Main {
 
   def main(args: Array[String]): Unit = {
 
-    val ports = Seq(2551, 2552, 2553)
+    val ports = Seq(2751, 2752, 2753)
     ports.foreach{port => startup(port)}
 
   }
