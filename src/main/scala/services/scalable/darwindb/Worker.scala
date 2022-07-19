@@ -397,8 +397,8 @@ object Worker {
 
       def close(): Future[Boolean] = {
 
-        sharedStatusKillSwitch.shutdown()
-        sharedTopologyKillSwitch.shutdown()
+        /*sharedStatusKillSwitch.shutdown()
+        sharedTopologyKillSwitch.shutdown()*/
         client.close()
 
         for {
